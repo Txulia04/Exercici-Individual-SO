@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	// Estructura especial para almacenar resultados de consultas 
 	MYSQL_RES *resultado;
 	MYSQL_ROW row;
-	char consulta [80];
+
 	conn = mysql_init(NULL);
 	if (conn==NULL) {
 		printf ("Error al crear la conexion: %u %s\n", 
@@ -25,37 +25,32 @@ int main(int argc, char **argv)
 		exit (1);
 	}
 	
-	err=mysql_query (conn, "SELECT * FROM Jugadors, Partides, PlayersGames");
-	if (err!=0) {
-		printf ("Error al consultar datos de la base %u %s\n",
-				mysql_errno(conn), mysql_error(conn));
-		exit (1);
-	}
+	mysql_query(conn, "USE Juego;");
 	
 	char nombre[20];
 	printf ("Escribe el nombre de un jugador \n");
 	scanf("%s", nombre);
 	
-	char Ganador[20];
-	strcpy (consulta,"SELECT Ganador FROM Partides"); 
-	strcat (consulta, Ganador);
-	strcat (consulta,"'");
-	// hacemos la consulta 
-	err=mysql_query (conn, consulta); 
-	if (err!=0) {
-		printf ("Error al consultar datos de la base %u %s\n",
-				mysql_errno(conn), mysql_error(conn));
-		exit (1);
+	char consulta [80];
+	strcpy (consulta,"SELECT PlayersGames.Puntuacion FROM Jugadors,Partides,PlayersGames WHERE Jugadors.UserName = '");
+	strcat (consulta, nombre);
+	strcat (consulta,"' AND Partides.Identificador = PlayersGames.Partida AND PlayersGames.Jugador = Jugadors.Identificador");
+	mysql_query (conn, consulta);
+	
+	resultado = mysql_store_result (conn);
+	row = mysql_fetch_row (resultado);
+	
+	if (row == NULL)
+		printf ("Ha habido un error en la consulta de datos \n");
+	else
+	{
+		printf ("Las puntuaciones del jugador introducido son las siguientes: \n");
+		while (row !=NULL) {
+			printf ("%s\n", row[0]);
+			row = mysql_fetch_row (resultado);
+		}
 	}
 	
-	resultado = mysql_store_result (conn); 
-	row = mysql_fetch_row (resultado);
-	if (row == NULL)
-		printf ("No se han obtenido datos en la consulta\n");
-	else {
-
-		printf ("Nombre de la persona: %s\n", row[0] );
-	}
 	mysql_close (conn);
 	exit(0);
 }
